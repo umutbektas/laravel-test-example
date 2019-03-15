@@ -12,18 +12,15 @@ class Team extends Model
         'name', 'size'
     ];
 
-
-
-
-    public function add($user)
+    public function add($users)
     {
         //guard
-        $this->guardAgainstTooManyMember();
+        $this->guardAgainstTooManyMember($this->extractNewUsersCount($users));
 
 
-        $method = $user instanceof User ? 'save' : 'saveMany';
+        $method = $users instanceof User ? 'save' : 'saveMany';
 
-        $this->members()->$method($user);
+        $this->members()->$method($users);
     }
 
 
@@ -46,28 +43,18 @@ class Team extends Model
 
 
 
-    public function removeMany($users)
-    {
-        $this->members()
-            ->whereIn('id', $users->pluck('id'))
-            ->update(['team_id' => null]);
-    }
-
-
-
-
     public function restart()
     {
         return $this->members()->update(['team_id' => null]);
 
     }
 
+
+
     public function members()
     {
         return $this->hasMany(User::class);
     }
-
-
 
 
 
@@ -80,11 +67,43 @@ class Team extends Model
 
 
 
-    public function guardAgainstTooManyMember()
+
+    protected function removeMany($users)
     {
-        if ($this->count() >= $this->size) {
+        $this->members()
+            ->whereIn('id', $users->pluck('id'))
+            ->update(['team_id' => null]);
+    }
+
+
+
+    protected function maximumTeamSize()
+    {
+        return $this->size;
+    }
+
+
+
+    protected function guardAgainstTooManyMember($newUsersCount)
+    {
+
+        $newTeamCount = $this->count() + $newUsersCount;
+
+        if ($newTeamCount > $this->maximumTeamSize()) {
             throw new \Exception;
         }
     }
+
+
+
+    protected function extractNewUsersCount($users)
+    {
+        return ($users instanceof User) ? 1 : count($users);
+    }
+
+
+
+
+
 
 }
