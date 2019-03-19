@@ -13,6 +13,8 @@ class ProductTest extends TestCase
 
     public function setUp(): void
     {
+        parent::setUp();
+
         $this->product = new Product('Fallout 4', 28);
     }
 
